@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ingredient Input</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        form { margin-bottom: 30px; }
+        input[type=text], input[type=number] { padding: 8px; margin-right: 10px; }
+        button { padding: 8px 16px; }
+        table { border-collapse: collapse; width: 50%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background: #f4f4f4; }
+    </style>
+</head>
+<body>
+    <h2>Add Ingredient</h2>
+    <form method="post">
+        <input type="text" name="ingredient" placeholder="Ingredient" required>
+        <input type="text" name="quantity" placeholder="Quantity" required>
+        <button type="submit">Add</button>
+    </form>
+    <a href="#" id="showIngredientsLink">Show Saved Ingredients</a>
+
+    <!-- Popup Modal -->
+    <style>
+        #ingredientsModal table {
+            display: block;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        #ingredientsModal th, #ingredientsModal td {
+            box-sizing: border-box;
+        }
+    </style>
+    <div id="ingredientsModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4);">
+        <div style="background:#fff; margin:60px auto; padding:20px; border-radius:8px; width:400px; position:relative; max-height:80vh; overflow-y:auto;">
+            <span id="closeModal" style="position:absolute; top:10px; right:16px; cursor:pointer; font-size:20px;">&times;</span>
+            <h3>Saved Ingredients</h3>
+            <table style="width:100%;">
+                <tr><th>Ingredient</th><th>Quantity</th></tr>
+                {% for item in ingredients %}
+                <tr>
+                    <td>{{ item.ingredient_name }}</td>
+                    <td>{{ item.quantity }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('showIngredientsLink').onclick = function(e) {
+            e.preventDefault();
+            document.getElementById('ingredientsModal').style.display = 'block';
+        };
+        document.getElementById('closeModal').onclick = function() {
+            document.getElementById('ingredientsModal').style.display = 'none';
+        };
+        window.onclick = function(event) {
+            var modal = document.getElementById('ingredientsModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        };
+    </script>
+</body>
+</html>

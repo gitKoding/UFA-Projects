@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Recipe Finder</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        textarea { width: 100%; height: 120px; margin-bottom: 20px; }
+        button { padding: 8px 16px; margin-bottom: 20px; }
+        #results { border: 1px solid #ccc; padding: 16px; min-height: 80px; background: #fafafa; }
+    </style>
+</head>
+<body>
+    <h2>Find Recipes</h2>
+    <form id="recipeForm">
+        <textarea id="prompt" name="prompt" placeholder="Enter Leftover Saver prompt (or click Show Recipes button to use default prompt):"></textarea><br>
+        <button type="submit">Show Recipes</button>
+    </form>
+    <h3 id="results_header" style="display:none;">Recipe Results</h3>
+    <div id="final_prompt" style="display:none;"></div>
+    <div id="model_details" style="display:none;"></div>
+    <div id="results" style="display:none;"></div>
+    <script>
+        document.getElementById('recipeForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const prompt = document.getElementById('prompt').value;
+            document.getElementById('results_header').style.display = '';
+            document.getElementById('results').style.display = '';
+            document.getElementById('model_details').style.display = '';
+            document.getElementById('final_prompt').style.display = '';
+            document.getElementById('results').innerText = 'Loading...';
+            document.getElementById('results_header').innerText = '';
+            document.getElementById('model_details').innerText = '';
+            document.getElementById('final_prompt').innerText = '';
+            try {//alert(prompt)
+                const response = await fetch('/get_recipes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+                document.getElementById('results').innerHTML = '1';
+                let data = await response.json();
+                // If data is a string, parse it as JSON
+                if (typeof data === 'string') {
+                    try {
+                        data = JSON.parse(data);
+                        document.getElementById('results').innerHTML = '2';
+                    } catch (e) {
+                        document.getElementById('results').innerText = 'Error parsing recipes data.';
+                        return;
+                    }
+                }
+                let mydata;
+                try {
+                    mydata = JSON.parse(data.recipes);
+                } catch (err) {
+                    document.getElementById('results').innerText = 'Invalid JSON.';
+                    return;
+                }
+                let recipesArr = (mydata && Array.isArray(mydata.recipes)) ? mydata.recipes : [];
+                if (recipesArr.length === 0) {
+                    document.getElementById('results').innerText = 'No recipes found.';
+                    return;
+                }
+                let html = '<ol style="padding-left: 20px;">';
+                recipesArr.forEach(recipe => {
+                    if (typeof recipe === 'object' && recipe !== null) {
+                        html += `
+                            <li style="margin-bottom: 24px;">
+                                <div><strong>${recipe.name ? recipe.name : 'Unnamed Recipe'}</strong></div>
+                                <div><em>Ingredients:</em>
+                                    <ul style="margin: 6px 0 12px 20px;">
+                                        ${Array.isArray(recipe.ingredients) ? recipe.ingredients.map(i => `<li>${i}</li>`).join('') : ''}
+                                    </ul>
+                                </div>
+                                <div><em>Steps:</em>
+                                    <ol style="margin: 6px 0 0 20px;">
+                                        ${Array.isArray(recipe.steps) ? recipe.steps.map(s => `<li>${s}</li>`).join('') : ''}
+                                    </ol>
+                                </div>
+                            </li>
+                        `;
+                    }
+                });
+                html += '</ol>';
+                document.getElementById('results').innerHTML = html;
+                if (data.final_prompt) {
+                    document.getElementById('final_prompt').innerHTML = `<h4>Final Prompt Used:</h4><p>${data.final_prompt}</p>`;
+                }
+                if (data.model_details) {
+                    document.getElementById('model_details').innerHTML = `<p>${data.model_details.replace(/\n/g, '<br>')}</p>`;
+                }
+                if (recipesArr.length === 0) {
+                    document.getElementById('results').innerText = 'No recipes found.';
+                    document.getElementById('final_prompt').innerHTML = '';
+                    document.getElementById('model_details').innerHTML = '';
+                }
+            } catch (err) {
+                document.getElementById('results').innerText = 'Error fetching recipes.--->' + err;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,2 +1,4 @@
 LeftoverSaver/data/api_key.txt
 __pycache__/
+build/
+dist/

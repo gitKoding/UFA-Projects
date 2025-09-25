@@ -56,49 +56,57 @@ def get_other_settings():
     # Default values
     return (3, 500, 0.7)
 
-def get_recipes_from_ai(ingredients, prompt_text=None):
+def get_recipes_from_ai(ingredients, user_prompt_text=None):
     model_name = get_model_name()
-    recipes_count, max_tokens, temperature = get_other_settings()  
-    if not prompt_text:
-        prompt_text = (
+    recipes_count, max_tokens, temperature = get_other_settings()
+    def_prompt_txt = ""
+    if not user_prompt_text:
+        user_prompt_text = (
             f"Suggest {recipes_count} recipes I can make using only below listed ingredients. "
             "List each recipe with its name, ingredients, and steps."
         )
-        print(f"\nUsing default prompt:\n{prompt_text}\n")
-    print(f"\nIngredients available to use:\n{ingredients}\n")
-    print(f"\nFetching recipe suggestions from AI Model - {model_name}...\n")
-    prompt_text += f"Suggest from these ingredients and based on their quantities only:\n {ingredients}"
+        def_prompt_txt = f"\nUsing default prompt:\n"
+    model_details = f"Fetching recipe suggestions from AI Model - {model_name.upper()}..."
+    print(def_prompt_txt + model_details)
+    prompt_json_txt = "Your response should be a JSON format with a 'recipes' key containing a list of recipes. Each recipe should have 'name', 'ingredients', and 'steps' keys."
+
+    user_prompt_text += f". Suggest from these ingredients and based on their quantities only:\n {ingredients}"
+    final_prompt = user_prompt_text + ". " + prompt_json_txt
+    display_prompt = def_prompt_txt + user_prompt_text
     try:
         if model_name == "gpt-5":
             response = openai.responses.create(
                 model=model_name,
-                input=prompt_text
+                input=final_prompt,
+                response_format={"type": "json_object"}
             )
-            return getattr(response, "output_text", None)
+            return display_prompt, model_details, getattr(response, "output_text", None)
         else:
             response = openai.chat.completions.create(
                 model=model_name,
-                messages=[{"role": "user", "content": prompt_text}],
+                messages=[{"role": "user", "content": final_prompt}],
                 max_tokens=max_tokens,
-                temperature=temperature
+                temperature=temperature,
+                #response_format={"type": "json_object"}
             )
-            return response.choices[0].message.content
+            return display_prompt, model_details, response.choices[0].message.content
     except Exception as e:
         print(f"Error fetching recipes from AI: {e}")
-        return None
+        return None, None, None
 
-def run():
+def run(user_prompt=None):
     ingredients = fetch_ingredients()
     ingredients_qty = [f"{item['ingredient_name']} - {item['quantity']}" for item in ingredients]
     ingredients_str = ", ".join(ingredients_qty)
     if not ingredients:
         print("No ingredients found.")
-        return
+        return "", "No ingredients found.", ""
     openai_api_key = get_api_key()
     if not openai_api_key:
         print("Please set your OPENAI_API_KEY in data/api_key.txt.")
-        return
+        return user_prompt or "", "Missing API key.", ""
     openai.api_key = openai_api_key
-    user_prompt = input("Enter Leftover Saver prompt (or press Enter to use default): ").strip()
-    recipes = get_recipes_from_ai(ingredients_str, user_prompt)
-    print(recipes if recipes else "No recipes returned.")
+    #user_prompt = input("Enter Leftover Saver prompt (or press Enter to use default): ").strip()
+    user_prompt, model_details, recipes = get_recipes_from_ai(ingredients_str, user_prompt)
+    return user_prompt or "", model_details or "", recipes or ""
+    #print(recipes if recipes else "No recipes returned.")

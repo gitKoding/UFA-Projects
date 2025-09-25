@@ -45,7 +45,7 @@ def update_ingredients(new_ingredients):
 		name = new_item.get('ingredient_name')
 		quantity = new_item.get('quantity', 0)
 		if name in ing_dict:
-			ing_dict[name]['quantity'] = quantity
+			ing_dict[name]['quantity'] += quantity
 		else:
 			ing_dict[name] = {'ingredient_name': name, 'quantity': quantity}
 
