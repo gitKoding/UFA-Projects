@@ -1,0 +1,54 @@
+# Configuration for BudgetBitesAPI
+app:
+  name: UFA-BudgetBitesAPI
+  version: 1.0.0
+  env: development
+  host: 0.0.0.0
+  port: 8080
+  log_level: INFO
+  request_timeout_seconds: 30
+  http_client_timeout_seconds: 15
+  max_retries: 2
+  min_store_results: 10
+  api_name: "UFA - Budget Bites API"
+
+# Cross-Origin Resource Sharing (CORS)
+cors:
+  allow_origins:
+    - "*"
+  allow_methods:
+    - "*"
+  allow_headers:
+    - "*"
+  allow_credentials: false
+  expose_headers:
+    - "X-Request-ID"
+  max_age_seconds: 600
+
+# API Keys are read in this order of precedence:
+# 1) Environment variables
+# 2) This file
+# NOTE: Do NOT commit real production keys in VCS.
+providers:
+  google:
+    generative_ai:
+      api_key: "AIzaSyAKXlrU1NWAMFx6Z6pzx6LX-_RWYPQEtDs"
+      model: "gemini-2.5-flash"
+    places:
+      api_key: ""
+
+# Prompt/query templates
+queries:
+  zip_template: |
+    find stores with low prices for {item_name} in zip code {zipcode}. Please list stores within {radius_miles} miles. Please create a well formed JSON output, using this schema, item_image size should be 500x300 - {{'product_name', 'item_image', 'store_name', 'store_address', 'distance_from_zipcode', 'price','unit/quantity', 'website_link'}}
+  city_state_template: |
+    find stores with low prices for {item_name} in {city_name}, {state_name}. Please list stores within {radius_miles} miles. Please create a well formed JSON output, using this schema, item_image size should be 500x300 - {{'product_name', 'item_image', 'store_name', 'store_address', 'distance_from_zipcode', 'price','unit/quantity', 'website_link'}}
+
+# Places API settings
+places:
+  enable_enrichment: true
+  country: US
+  # Maximum number of places lookups to perform per request to avoid quota spikes
+  max_enrich_per_request: 15
+  # Whether to only enrich missing fields (address/website), or always normalize
+  enrich_mode: missing_only
